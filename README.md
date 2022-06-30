@@ -48,7 +48,7 @@ visualize_emos(markers[0])
 Анализ невербальных маркеров позволяет выявить маркеры агрессии и сопоставить их с текстовой и звуковой модальностями.
 
 Выход:
-![image](https://user-images.githubusercontent.com/34346831/176688013-2cfabf1d-a8fc-4ae2-bfba-b906993ab610.png)
+![gif (online-video-cutter com)](https://user-images.githubusercontent.com/83948828/176669174-82891331-7328-434e-bf2a-98ce291ab146.gif)
 
 Временное окно 10 секунд;
 
