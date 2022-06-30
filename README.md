@@ -1,3 +1,8 @@
 # Agressive_audio_marks
+### Что делает
+Извлекает маркеры агрессивности речи
 
-Solution to extract aggressive marks from the speech
+### Установка зависимостей
+```
+pip install -r requirements.txt
+```
