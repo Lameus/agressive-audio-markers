@@ -1,13 +1,14 @@
-import numpy as np
-import librosa
 import warnings
-from decord import AudioReader, bridge
 
-from torch import load
-import torch
+import librosa
+import numpy as np
+from decord import AudioReader, bridge
+from src import utils
 from src.AudioModel import AudioModel
 from src.Torch_emotion import Torch_emotion
 
+import torch
+from torch import load
 
 warnings.filterwarnings('ignore')
 
@@ -33,25 +34,31 @@ def calculate_angles(envelope):
             decreases.update({i+1: angle})
     # To calculate the last angle
     if len(envelope) != len(increases) + len(decreases):
-        angle = np.rad2deg(np.arctan(envelope[-1]-envelope[-2]))
+        try:
+            angle = np.rad2deg(np.arctan(envelope[-1]-envelope[-2]))
+        except IndexError:
+            angle = 0
         if angle >= 0:
-            increases.update({i+1: angle})
+            increases.update({len(envelope)-1: angle})
         else:
-            decreases.update({i+1: angle})
+            decreases.update({len(envelope)-1: angle})
     return increases, decreases
 
 def get_rapidness(sequence, envelope, type='Volume'):
     sharp_angles = {}
     for timestamp, angle in sequence.items():
-        if angle >= np.mean(list(sequence.values())) + 2 * np.std(list(sequence.values())):
+        if angle >= np.mean(list(sequence.values())) + 2.5 * np.std(list(sequence.values())):
             sharp_angles.update({timestamp:angle})
     
     if type=='Volume':
         timestamps = []
         # Loudness detection
         for timestamp in sharp_angles.keys():
-            if 1 - np.abs(envelope[timestamp]) < np.abs(envelope[timestamp]) - np.abs(np.mean(envelope)):
-                timestamps.append(timestamp)
+            try:
+                if 1 - np.abs(envelope[timestamp]) < np.abs(envelope[timestamp]) - np.abs(np.mean(envelope)):
+                    timestamps.append(timestamp)
+            except IndexError:
+                continue
         return timestamps
     else:
         return sharp_angles.keys()
@@ -80,8 +87,8 @@ def get_emotions(signal, sr, device):
 
     return final_emo_score
 
-def sound_markers(path, sample_rate=44100, device='cpu', timestamps=[], name='',
-annotation=False):
+def sound_markers(path, sample_rate=44100, device='cpu', timestamps=False, name='',
+annotation=False, duration=10):
 
     sr = sample_rate
 
@@ -91,7 +98,6 @@ annotation=False):
         res_marks = {}
         for current in timestamps:
             for_volume = signal[0].tolist()
-            # print(len(for_volume[current[0][1]*sr:current[1][1]*sr]))
             for_volume = for_volume[current[0][1]*sr:current[1][1]*sr]
             envelope = amplitude_envelope(for_volume)
             incrs, decrs = calculate_angles(envelope)
@@ -116,6 +122,35 @@ annotation=False):
                 for d in marks[1]:
                     print('Громкость была резко понижена на: {} секунде'.format(current[0][1]+round(i*1024/sr, 3)))
                     print('Темп речи: {}'.format(temp))
+    else:
+        res_marks = {}
+        chunks = utils.chunkizer(duration, signal[0], sr)
+        time = 0
+        for chunk in chunks:
+            envelope = amplitude_envelope(chunk)
+            incrs, decrs = calculate_angles(envelope)
+            marks_incr, marks_decr = get_rapidness(incrs, envelope), get_rapidness(decrs, envelope)
+            transormed = torch.tensor(chunk)
+            transormed.unsqueeze_(0)
+            marks = (marks_incr, marks_decr) # Timestamps of increasings and decreasings
+            temp = get_temp(transormed.numpy(), sr)
+
+            # Emotions
+            final_emo_score = get_emotions(transormed, sr, device)
+
+            result = {'time_incr': marks[0], 'time_decr': marks[1],
+                    'count_incr': len(marks_incr), 'count_decr': len(marks_decr),
+                    'temp': temp, 'emotions': final_emo_score}
+            res_marks.update({name+str(time):result})
+
+            if annotation:
+                for i in marks[0]:
+                    print('Громкость была резко повышена на: {} секунде'.format(time+round(i*1024/sr, 3)))
+                    print('Темп речи: {}'.format(temp))
+                for d in marks[1]:
+                    print('Громкость была резко понижена на: {} секунде'.format(time+round(i*1024/sr, 3)))
+                    print('Темп речи: {}'.format(temp))
+            time += duration
     return res_marks
 
 
