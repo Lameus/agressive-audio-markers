@@ -46,4 +46,4 @@ visualize_emos(markers[0])
 
 Временное окно 10 секунд;
 
-Пример содержится в блокноте demonstration.ipynb
+*Пример содержится в блокноте demonstration.ipynb*
