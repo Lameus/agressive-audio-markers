@@ -158,5 +158,4 @@ if __name__=="__main__":
     result = sound_markers('_rosenzweig_1652799654022.webm')
     print(result)
 
-    # print(m, li, ld, t)
     
