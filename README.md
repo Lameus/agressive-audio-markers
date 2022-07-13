@@ -1,4 +1,4 @@
-# Agressive_audio_marks
+# Agressive audio markers
 
 ### Что делает
 Извлекает маркеры агрессивности речи
