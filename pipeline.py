@@ -47,9 +47,12 @@ def calculate_angles(envelope):
 def get_rapidness(sequence, envelope, type='Volume'):
     sharp_angles = {}
     for timestamp, angle in sequence.items():
-        if angle >= np.mean(list(sequence.values())) + 2.5 * np.std(list(sequence.values())):
-            sharp_angles.update({timestamp:angle})
-    
+        if angle > 0:
+            if angle >= np.mean(list(sequence.values())) + 2.5 * np.std(list(sequence.values())):
+                sharp_angles.update({timestamp:angle})
+        else:
+            if angle <= np.mean(list(sequence.values())) - 2.5 * np.std(list(sequence.values())):
+                sharp_angles.update({timestamp:angle})
     if type=='Volume':
         timestamps = []
         # Loudness detection
@@ -68,10 +71,10 @@ def get_temp(signal, sr):
     tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr)
     return round(tempo[0], 1)
 
-def get_emotions(signal, sr, device):
+def get_emotions(signal, sr, device, model_path='./model/Emotion_classifier.pth'):
     Emos = {0: 'angry', 1: 'disgust', 2: 'happiness', 3: 'neutral', 4: 'fear', 5: 'surprise', 6: 'sadness'}
     model = AudioModel().to(device)
-    model.load_state_dict(load('./model/Emotion_classifier.pth', map_location=device))
+    model.load_state_dict(load(model_path, map_location=device))
     emotion = Torch_emotion(model, signal, sr=sr, device='device')
     emotions = emotion.audio_pipeline()
     emo_scores = []
@@ -88,7 +91,7 @@ def get_emotions(signal, sr, device):
     return final_emo_score
 
 def sound_markers(path, sample_rate=44100, device='cpu', timestamps=False, name='',
-annotation=False, duration=10):
+annotation=False, duration=10, model_path='./model/Emotion_classifier.pth'):
 
     sr = sample_rate
 
@@ -108,7 +111,7 @@ annotation=False, duration=10):
             temp = get_temp(transormed.numpy(), sr)
 
             # Emotions
-            final_emo_score = get_emotions(transormed, sr, device)
+            final_emo_score = get_emotions(transormed, sr, device, model_path)
 
             result = {'time_incr': marks[0], 'time_decr': marks[1],
                     'count_incr': len(marks_incr), 'count_decr': len(marks_decr),
@@ -155,7 +158,8 @@ annotation=False, duration=10):
 
 
 if __name__=="__main__":
-    result = sound_markers('_rosenzweig_1652799654022.webm')
+    result = sound_markers('example_part.mp4')
     print(result)
 
+    # print(m, li, ld, t)
     
