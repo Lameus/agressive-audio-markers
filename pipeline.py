@@ -71,11 +71,11 @@ def get_temp(signal, sr):
     tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr)
     return round(tempo[0], 1)
 
-def get_emotions(signal, sr, device, model_path='./model/Emotion_classifier.pth'):
+def get_emotions(signal, sr=44100, device='cpu', model_path='./model/Emotion_classifier.pth'):
     Emos = {0: 'angry', 1: 'disgust', 2: 'happiness', 3: 'neutral', 4: 'fear', 5: 'surprise', 6: 'sadness'}
     model = AudioModel().to(device)
     model.load_state_dict(load(model_path, map_location=device))
-    emotion = Torch_emotion(model, signal, sr=sr, device='device')
+    emotion = Torch_emotion(model, signal, sr=sr, device=device)
     emotions = emotion.audio_pipeline()
     emo_scores = []
     for i in range(len(Emos)):
