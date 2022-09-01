@@ -1,6 +1,4 @@
-import torch
 from torch import nn
-import numpy as np
 
 
 class AudioModel(nn.Module):
@@ -71,4 +69,3 @@ class AudioModel(nn.Module):
         predictions = self.softmax(logits)
 
         return predictions
-
