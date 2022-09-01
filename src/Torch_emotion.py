@@ -16,7 +16,6 @@ class Torch_emotion:
         self.sr = sr
         self.num_samples = 3 * sr
         self.target_sample_rate = sr
-        self.to_voice = torchaudio.transforms.Vad(self.sr)
 
         self.predict = []  # Значения эмоций
 
@@ -39,8 +38,6 @@ class Torch_emotion:
             mfcc = np.transpose(mfcc, (2, 0, 1)).astype(np.float32)
 
             self.test.append(torch.tensor(mfcc, dtype=torch.float))
-        # Перевод списка тензоров к тензору тензоров
-        # self.test = torch.stack(self.test).to(self.device)
 
         # Предсказание
         self.model.eval()
@@ -69,5 +66,5 @@ class Torch_emotion:
 
 
 # if __name__ == '__main__':
-#     Test = Torch_emotion(audio_path='C:/Users/1vany/Desktop/Disktop/Python/АудиоТЗ/фрагменты/0.0_0.0.mp3')
+#     Test = Torch_emotion(audio_path='ю/0.0_0.0.mp3')
 #     print(Test.audio_pipeline())
